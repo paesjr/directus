@@ -200,6 +200,17 @@ export class FieldsService {
 			knownCollections.includes(field.collection),
 		);
 
+		// Update specific database type overrides
+		for (const field of result) {
+			if (field.meta?.special?.includes('cast-timestamp')) {
+				field.type = 'timestamp';
+			} else if (field.meta?.special?.includes('cast-datetime')) {
+				field.type = 'dateTime';
+			}
+
+			field.type = this.helpers.schema.processFieldType(field);
+		}
+
 		// Filter the result so we only return the fields you have read access to
 		if (this.accountability && this.accountability.admin !== true) {
 			const policies = await fetchPolicies(this.accountability, { knex: this.knex, schema: this.schema });
@@ -242,17 +253,6 @@ export class FieldsService {
 				if (allowedFields.has('*')) return true;
 				return allowedFields.has(field.field);
 			});
-		}
-
-		// Update specific database type overrides
-		for (const field of result) {
-			if (field.meta?.special?.includes('cast-timestamp')) {
-				field.type = 'timestamp';
-			} else if (field.meta?.special?.includes('cast-datetime')) {
-				field.type = 'dateTime';
-			}
-
-			field.type = this.helpers.schema.processFieldType(field);
 		}
 
 		return result;
